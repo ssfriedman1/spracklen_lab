@@ -1,0 +1,29 @@
+---
+title: "menarche_research"
+output: html_document
+date: "2022-10-10"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+
+```{r}
+menarche_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f31_ctos_inv.dat')
+demo_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/dem_ctos_inv.dat')
+socio_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f34_ctos_inv.dat')
+race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f41_ctos_inv.dat')
+preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
