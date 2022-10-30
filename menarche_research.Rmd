@@ -22,34 +22,99 @@ race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f
 preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
 ```
 
+```{r}
+merged <- right_join(x = menarche_data, y = demo_data, by ="ID" )
+
+merged <- right_join(x = merged, y = socio_data, by = "ID")
+
+merged <- right_join(x = merged, y = race_data, by ="ID")
+
+merged <- right_join(x = merged, y = preg_data, by = "ID")
+```
+
 
 ```{r}
-glimpse(menarche_data)
-glimpse(demo_data)
-glimpse(socio_data)
-glimpse(race_data)
-glimpse(preg_data)
+glimpse(merged)
 ```
 
 ```{r}
-skimr::skim(menarche_data)
-names(menarche_data)
-```
-
-```{r}
-
-menarche_data$MENARCHE <- menarche_data$MENARCHE + 8
-fortify(menarche_data)
-
-```
-
-```{r}
-ggplot(menarche_data, aes(x = MENARCHE)) + geom_histogram(bins = 9)
+skimr::skim(merged)
+names(merged)
 ```
 
 ```{r}
 
+merged$MENARCHE <- merged$MENARCHE + 8
+fortify(merged)
+
+```
+
+```{r}
+ggplot(merged, aes(x = MENARCHE)) + geom_histogram(bins = 9)
+```
+
+```{r}
 se <- function(x) sqrt(var(x)/length(x))
+```
 
 
+
+```{r}
+
+```
+
+```{r}
+merged$MENARCHE <- ifelse(merged$MENARCHE <= 11, '<=11', 
+                   ifelse(merged$MENARCHE == 12, '12', 
+                   ifelse(merged$MENARCHE == 13, '13', 
+                   ifelse(merged$MENARCHE >= 14,'>=14', 0))))
+
+merged$ethnicity <- ifelse(merged$ETHNICITY_IMPUTED == 0, 0, 1)
+
+merged$ALCOHOL <- ifelse(merged$ALCOHOL == 1,1, 
+                         ifelse(merged$ALCOHOL ==2, 2, 3))
+
+merged$RACENIH <- ifelse(merged$RACENIH == 2, 1,
+                         ifelse(merged$RACENIH == 3, 1,
+                                ifelse(merged$RACENIH == 4, 2, 
+                                       ifelse(merged$RACENIH == 5, 3, 4))))
+
+
+ggplot(merged, aes(x = MENARCHE)) + geom_histogram(stat= 'count')
+```
+```{r}
+merged$MENARCHE <- factor(merged$MENARCHE, levels = c('<=11', '12','13','>=14'), labels = c('<=11', '12','13','>=14'))
+
+merged$PREECLMP <- factor(merged$PREECLMP, levels = c(0,1,9), labels = c('No Preeclampsia during pregnancy','Preeclampsia during pregnancy', 'No Answer'))
+
+merged$HYPTPREG <- factor(merged$HYPTPREG, levels= c(0,1), labels = c('Hypertension during preg','No hypertension during preg'))
+
+merged$DIABPREG <- factor(merged$DIABPREG, levels= c(0,1), labels = c('Diabetes during preg','No Diabetes during preg'))
+
+merged$BABYGT9LBS <- factor(merged$BABYGT9LBS, levels = c(0,1), labels = c("Overweight baby", "Not overweight baby") )
+
+merged$BABYLT5LBS <- factor(merged$BABYLT5LBS, levels = c(0,1), labels = c("Underweight baby",'Not underweight baby'))
+
+merged$ALCOHOL <- factor(merged$ALCOHOL, levels = c(1,2,3), labels = c('Non drinker','Past drinker','Current drinker'))
+
+merged$SMOKING <- factor(merged$SMOKING, levels = c(0,1,2), labels = c('Non smoker','Past smoker','Current smoker'))
+
+merged$ETHNICITY <- factor(merged$ETHNICNIH, levels = c(0,1), labels = c('Not Hispanic/Latino','Hispanic/Latino'))
+  
+merged$RACE <- factor(merged$RACENIH, levels = c(1,2,3,4), labels = c('Asian/Pacific Islander','Black','White','Other/Unknown'))
+
+```
+
+```{r}
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| PREECLMP, data = merged)
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| HYPTPREG, data = merged)
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYLT5LBS, data = merged)
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYGT9LBS, data = merged)
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| DIABPREG, data = merged)
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| , data = merged)
 ```
