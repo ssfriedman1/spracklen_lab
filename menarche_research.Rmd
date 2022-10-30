@@ -14,11 +14,11 @@ library(skimr)
 ```
 
 
-```{r}
+```{r, echo = FALSE}
 menarche_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f31_ctos_inv.dat')
 demo_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/dem_ctos_inv.dat')
 socio_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f34_ctos_inv.dat')
-race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f41_ctos_inv.dat')
+race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f41_imputed_ctos_inv.dat')
 preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
 ```
 
@@ -36,4 +36,20 @@ skimr::skim(menarche_data)
 names(menarche_data)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+menarche_data$MENARCHE <- menarche_data$MENARCHE + 8
+fortify(menarche_data)
+
+```
+
+```{r}
+ggplot(menarche_data, aes(x = MENARCHE)) + geom_histogram(bins = 9)
+```
+
+```{r}
+
+se <- function(x) sqrt(var(x)/length(x))
+
+
+```
