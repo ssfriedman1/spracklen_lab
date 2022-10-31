@@ -20,27 +20,48 @@ demo_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/d
 socio_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f34_ctos_inv.dat')
 race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f41_imputed_ctos_inv.dat')
 preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
+measure_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f80_ctos_inv.dat')
+
 ```
 
 ```{r}
-merged <- right_join(x = menarche_data, y = demo_data, by ="ID" )
-
-merged <- right_join(x = merged, y = socio_data, by = "ID")
-
-merged <- right_join(x = merged, y = race_data, by ="ID")
-
-merged <- right_join(x = merged, y = preg_data, by = "ID")
+glimpse(preg_data)
 ```
 
+```{r}
+measure_data <- filter(measure_data, F80VTYP == 1)
+menarche_data <- menarche_data %>% drop_na(MENARCHE)
+```
+
+
+glimpse(measure_data)
+
+
+
+```{r}
+merged <- left_join(x = preg_data, y = race_data, by='ID')
+
+merged <- left_join(x = merged, y = socio_data, by ="ID" )
+
+merged <- left_join(x = merged, y = menarche_data, by ="ID")
+
+merged <- left_join(x = merged, y = demo_data, by = "ID")
+
+merged <- left_join(x = merged, y = measure_data, by='ID')
+
+
+```
+
+merged <- left_join(x = merged, y = socio_data, by = "ID")
 
 ```{r}
 glimpse(merged)
 ```
 
-```{r}
+
 skimr::skim(merged)
 names(merged)
-```
+
 
 ```{r}
 
@@ -103,18 +124,23 @@ merged$ETHNICITY <- factor(merged$ETHNICNIH, levels = c(0,1), labels = c('Not Hi
   
 merged$RACE <- factor(merged$RACENIH, levels = c(1,2,3,4), labels = c('Asian/Pacific Islander','Black','White','Other/Unknown'))
 
+merged$PRETERM <- ifelse(merged$PREGNUM - merged$PREG6MN > 0, 1, 0)
+
+merged$PRETERM <- factor(merged$PRETERM, levels = c(0,1), labels = c('No preterm birth
+','Preterm birth'))
+
 ```
 
 ```{r}
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| PREECLMP, data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + SMOKING + ALCOHOL| PREECLMP, data = merged, render.continuous =c(.='Mean'))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| HYPTPREG, data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous =c(.='Mean'))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYLT5LBS, data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous =c(.='Mean'))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYGT9LBS, data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous =c(.='Mean'))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| DIABPREG, data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous =c(.='Mean'))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| , data = merged)
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous =c(.='Mean'))
 ```
