@@ -21,16 +21,18 @@ socio_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/
 race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f41_imputed_ctos_inv.dat')
 preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
 measure_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f80_ctos_inv.dat')
-
+nses_data <- read.csv('/Users/spencerfriedman/Documents/School/Spracklen_lab/ct_os_tiv.csv')
 ```
 
 ```{r}
-glimpse(preg_data)
+glimpse(nses_data)
+glimpse(menarche_data)
 ```
 
 ```{r}
 measure_data <- filter(measure_data, F80VTYP == 1)
 menarche_data <- menarche_data %>% drop_na(MENARCHE)
+names(nses_data)[names(nses_data) == 'id'] <- 'ID'
 ```
 
 
@@ -49,7 +51,7 @@ merged <- left_join(x = merged, y = demo_data, by = "ID")
 
 merged <- left_join(x = merged, y = measure_data, by='ID')
 
-
+merged <- left_join(x = merged, y = nses_data, by = 'ID')
 ```
 
 merged <- left_join(x = merged, y = socio_data, by = "ID")
@@ -106,15 +108,15 @@ ggplot(merged, aes(x = MENARCHE)) + geom_histogram(stat= 'count')
 ```{r}
 merged$MENARCHE <- factor(merged$MENARCHE, levels = c('<=11', '12','13','>=14'), labels = c('<=11', '12','13','>=14'))
 
-merged$PREECLMP <- factor(merged$PREECLMP, levels = c(0,1,9), labels = c('No Preeclampsia during pregnancy','Preeclampsia during pregnancy', 'No Answer'))
+merged$PREECLMP <- factor(merged$PREECLMP, levels = c(0,1), labels = c('No Preeclampsia during pregnancy','Preeclampsia during pregnancy'))
 
-merged$HYPTPREG <- factor(merged$HYPTPREG, levels= c(0,1), labels = c('Hypertension during preg','No hypertension during preg'))
+merged$HYPTPREG <- factor(merged$HYPTPREG, levels= c(0,1), labels = c('No Hypertension during preg','Hypertension during preg'))
 
-merged$DIABPREG <- factor(merged$DIABPREG, levels= c(0,1), labels = c('Diabetes during preg','No Diabetes during preg'))
+merged$DIABPREG <- factor(merged$DIABPREG, levels= c(0,1), labels = c('No Diabetes during preg','Diabetes during preg'))
 
-merged$BABYGT9LBS <- factor(merged$BABYGT9LBS, levels = c(0,1), labels = c("Overweight baby", "Not overweight baby") )
+merged$BABYGT9LBS <- factor(merged$BABYGT9LBS, levels = c(0,1), labels = c("No Overweight Baby", "Overweight baby") )
 
-merged$BABYLT5LBS <- factor(merged$BABYLT5LBS, levels = c(0,1), labels = c("Underweight baby",'Not underweight baby'))
+merged$BABYLT5LBS <- factor(merged$BABYLT5LBS, levels = c(0,1), labels = c("No Underweight baby",'Underweight baby'))
 
 merged$ALCOHOL <- factor(merged$ALCOHOL, levels = c(1,2,3), labels = c('Non drinker','Past drinker','Current drinker'))
 
@@ -129,18 +131,48 @@ merged$PRETERM <- ifelse(merged$PREGNUM - merged$PREG6MN > 0, 1, 0)
 merged$PRETERM <- factor(merged$PRETERM, levels = c(0,1), labels = c('No preterm birth
 ','Preterm birth'))
 
+label(merged$t0.normindx) <- 'Normalized Socioeconomic Status (NSES)'
+
 ```
 
 ```{r}
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + SMOKING + ALCOHOL| PREECLMP, data = merged, render.continuous =c(.='Mean'))
+my.render.cont <- function(x) {
+    with(stats.apply.rounding(stats.default(x), digits=2), c("",
+        "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
+}
+my.render.cat <- function(x) {
+    c("", sapply(stats.default(x), function(y) with(y,
+        sprintf("%d (%0.0f %%)", FREQ, PCT))))
+}
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous =c(.='Mean'))
+pvalue <- function(x, ...) {
+    # Construct vectors of data y, and groups (strata) g
+    y <- unlist(x)
+    g <- factor(rep(1:length(x), times=sapply(x, length)))
+    if (is.numeric(y)) {
+        # For numeric variables, perform a standard 2-sample t-test
+        p <- t.test(y ~ g)$p.value
+    } else {
+        # For categorical variables, perform a chi-squared test of independence
+        p <- chisq.test(table(y, g))$p.value
+    }
+    # Format the p-value, using an HTML entity for the less-than sign.
+    # The initial empty string places the output on the line below the variable label.
+    c("", sub("<", "&lt;", format.pval(p, digits=3, eps=0.001)))
+}
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous =c(.='Mean'))
+```
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous =c(.='Mean'))
+```{r}
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI+ t0.normindx + SMOKING + ALCOHOL| PREECLMP, data = merged, overall= F, extra.col=list('P-value'=pvalue), render.continuous = my.render.cont, render.categorical = my.render.cat)
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous =c(.='Mean'))
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous =c(.='Mean'))
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+
+table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 ```
