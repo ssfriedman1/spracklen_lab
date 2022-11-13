@@ -11,6 +11,9 @@ library(tidyverse)
 library(table1)
 library(MatchIt)
 library(skimr)
+library(broom)
+library(gtsummary)
+library(aod)
 ```
 
 
@@ -102,10 +105,15 @@ merged$RACENIH <- ifelse(merged$RACENIH == 2, 1,
                                 ifelse(merged$RACENIH == 4, 2, 
                                        ifelse(merged$RACENIH == 5, 3, 4))))
 
+merged$EDUC <- ifelse(merged$EDUC <= 5, 1, 
+                      ifelse(merged$EDUC == 6, 2,
+                             ifelse(merged$EDUC == 7, 2,
+                             ifelse(merged$EDUC >= 8, 3, 0))))
 
 ggplot(merged, aes(x = MENARCHE)) + geom_histogram(stat= 'count')
 ```
 ```{r}
+merged$EDUC <- factor(merged$EDUC, levels = c(1,2,3), labels = c('<= High school diploma/GED','School after high school','College degree or higher'))
 merged$MENARCHE <- factor(merged$MENARCHE, levels = c('<=11', '12','13','>=14'), labels = c('<=11', '12','13','>=14'))
 
 merged$PREECLMP <- factor(merged$PREECLMP, levels = c(0,1), labels = c('No Preeclampsia during pregnancy','Preeclampsia during pregnancy'))
@@ -164,15 +172,96 @@ pvalue <- function(x, ...) {
 ```
 
 ```{r}
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI+ t0.normindx + SMOKING + ALCOHOL| PREECLMP, data = merged, overall= F, extra.col=list('P-value'=pvalue), render.continuous = my.render.cont, render.categorical = my.render.cat)
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC +  RACE + BMI + t0.normindx + SMOKING + ALCOHOL| PREECLMP, data = merged, overall= F, extra.col=list('P-value'=pvalue), render.continuous = my.render.cont, render.categorical = my.render.cat)
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+```
+
+
+univ_tab <- linelist %>% 
+  dplyr::select(MENARCHE, PREECLMP) %>% ## select variables of interest
+
+  tbl_uvregression(                         ## produce univariate table
+    method = glm,                           ## define regression want to run (generalised linear model)
+    y = PREECLMP,                            ## define outcome variable
+    method.args = list(family = binomial),  ## define what type of glm want to run (logistic)
+    exponentiate = TRUE                     ## exponentiate to produce odds ratios (rather than log odds)
+  )
+
+## view univariate results table 
+univ_tab
+
+
+```{r undajusted regression}
+merged$MENARCHE <- relevel(merged$MENARCHE, ref='12')
+
+modelPrec <- glm(PREECLMP ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+summary(modelPrec)
+modelHypr <- glm(HYPTPREG ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+summary(modelHypr)
+modelUnder <- glm(BABYLT5LBS ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+summary(modelUnder)
+modelOver <- glm(BABYGT9LBS ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelOver), confint(modelOver)))
+summary(modelOver)
+modelDiab <- glm(DIABPREG ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+summary(modelDiab)
+modelPret <- glm(PRETERM ~ MENARCHE, family = 'binomial', data = merged)
+exp(cbind(OR= coef(modelPret), confint(modelPret)))
+summary(modelPret)
+```
+
+```{r demo adjusted regression}
+modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+summary(modelPrec)
+modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+summary(modelHypr)
+modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+summary(modelUnder)
+modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelOver), confint(modelOver)))
+summary(modelOver)
+modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+summary(modelDiab)
+modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+exp(cbind(OR= coef(modelPret), confint(modelPret)))
+summary(modelPret)
+```
+
+```{r demo and life edjusted}
+modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+summary(modelPrec)
+modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+summary(modelHypr)
+modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+summary(modelUnder)
+modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelOver), confint(modelOver)))
+summary(modelOver)
+modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+summary(modelDiab)
+modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+exp(cbind(OR= coef(modelPret), confint(modelPret)))
+summary(modelPret)
+
 ```
