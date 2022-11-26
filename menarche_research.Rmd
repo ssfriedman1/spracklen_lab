@@ -205,63 +205,105 @@ merged$MENARCHE <- relevel(merged$MENARCHE, ref='12')
 
 modelPrec <- glm(PREECLMP ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+modelPrec %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPrec)
+
 modelHypr <- glm(HYPTPREG ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+modelHypr %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelHypr)
+
 modelUnder <- glm(BABYLT5LBS ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+modelUnder %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelUnder)
+
 modelOver <- glm(BABYGT9LBS ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelOver), confint(modelOver)))
+modelOver %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelOver)
 modelDiab <- glm(DIABPREG ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+modelDiab %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelDiab)
+
 modelPret <- glm(PRETERM ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR= coef(modelPret), confint(modelPret)))
+modelPret %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPret)
 ```
 
 ```{r demo adjusted regression}
 modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+modelPrec %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPrec)
+```
+```{r}
 modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+modelHypr %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelHypr)
+```
+```{r}
 modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+modelUnder %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelUnder)
+```
+```{r}
 modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelOver), confint(modelOver)))
+modelOver %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelOver)
+```
+```{r}
 modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+modelDiab %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelDiab)
+```
+```{r}
 modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
 exp(cbind(OR= coef(modelPret), confint(modelPret)))
+modelPret %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPret)
 ```
 
 ```{r demo and life edjusted}
 modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
+modelPrec %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPrec)
+```
+```{r}
 modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
+modelHypr %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelHypr)
+```
+```{r}
 modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
+modelUnder %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelUnder)
+```
+```{r}
 modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelOver), confint(modelOver)))
+modelOver %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelOver)
+```
+```{r}
 modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
+modelDiab%>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelDiab)
+```
+```{r}
 modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR= coef(modelPret), confint(modelPret)))
+modelPret %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPret)
 
 ```
