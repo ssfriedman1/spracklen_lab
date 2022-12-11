@@ -25,6 +25,7 @@ race_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f
 preg_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f158_ctos_inv.dat')
 measure_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f80_ctos_inv.dat')
 nses_data <- read.csv('/Users/spencerfriedman/Documents/School/Spracklen_lab/ct_os_tiv.csv')
+mother_data <- read.delim('/Users/spencerfriedman/Documents/School/Spracklen_lab/f42_os_inv.dat')
 ```
 
 ```{r}
@@ -55,9 +56,10 @@ merged <- left_join(x = merged, y = demo_data, by = "ID")
 merged <- left_join(x = merged, y = measure_data, by='ID')
 
 merged <- left_join(x = merged, y = nses_data, by = 'ID')
+
+merged <- left_join(x = merged, y = mother_data, by = 'ID')
 ```
 
-merged <- left_join(x = merged, y = socio_data, by = "ID")
 
 ```{r}
 glimpse(merged)
@@ -86,7 +88,7 @@ se <- function(x) sqrt(var(x)/length(x))
 
 
 ```{r}
-
+merged$FULLTERM
 ```
 
 ```{r}
@@ -139,9 +141,21 @@ merged$PRETERM <- ifelse(merged$PREGNUM - merged$PREG6MN > 0, 1, 0)
 merged$PRETERM <- factor(merged$PRETERM, levels = c(0,1), labels = c('No preterm birth
 ','Preterm birth'))
 
+merged$FULLTERM <- factor(merged$FULLTERM, levels = c(1,2), labels = c('Mother full term birth', 'Mother preterm birth'))
+
+merged$MWEIGHT <- ifelse(merged$WGTBRTH == 4, 3, ifelse(merged$WGTBRTH == 1, 1, ifelse(merged$WGTBRTH == 3 , 2, ifelse(merged$WGTBRTH == 2, 2, 0))))
+
+merged$MWEIGHT <- factor(merged$MWEIGHT, levels = c(1,2,3), labels = c('Mother born underweight','Mother born normal weight','Mother born overweight'))
+
 label(merged$t0.normindx) <- 'Normalized Socioeconomic Status (NSES)'
+```
+
+
+```{r}
+merged$FULLTERM
 
 ```
+
 
 ```{r}
 my.render.cont <- function(x) {
@@ -176,13 +190,13 @@ table1(~ AGE + MENARCHE + ETHNICITY + EDUC +  RACE + BMI + t0.normindx + SMOKING
 
 table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| HYPTPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYLT5LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL + MWEIGHT| BABYLT5LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| BABYGT9LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL + MWEIGHT| BABYGT9LBS, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
 table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| DIABPREG, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 
-table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL| PRETERM, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
+table1(~ AGE + MENARCHE + ETHNICITY + EDUC + RACE + BMI + t0.normindx + SMOKING + ALCOHOL + FULLTERM| PRETERM, data = merged,render.continuous = my.render.cont, render.categorical = my.render.cat, overall= F, extra.col=list('P-value'=pvalue))
 ```
 
 
@@ -199,9 +213,16 @@ univ_tab <- linelist %>%
 ## view univariate results table 
 univ_tab
 
+```{r}
+merged$OVERWEIGHT
+```
+
 
 ```{r undajusted regression}
 merged$MENARCHE <- relevel(merged$MENARCHE, ref='12')
+
+```
+```{r}
 
 modelPrec <- glm(PREECLMP ~ MENARCHE, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
@@ -234,74 +255,74 @@ summary(modelPret)
 ```
 
 ```{r demo adjusted regression}
-modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
 modelPrec %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPrec)
 ```
 ```{r}
-modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
 modelHypr %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelHypr)
 ```
 ```{r}
-modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
 modelUnder %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelUnder)
 ```
 ```{r}
-modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelOver), confint(modelOver)))
 modelOver %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelOver)
 ```
 ```{r}
-modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
 modelDiab %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelDiab)
 ```
 ```{r}
-modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC, family = 'binomial', data = merged)
+modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM, family = 'binomial', data = merged)
 exp(cbind(OR= coef(modelPret), confint(modelPret)))
 modelPret %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPret)
 ```
 
 ```{r demo and life edjusted}
-modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelPrec <- glm(PREECLMP ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC  + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelPrec), confint(modelPrec)))
 modelPrec %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPrec)
 ```
 ```{r}
-modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelHypr <- glm(HYPTPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelHypr), confint(modelHypr)))
 modelHypr %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelHypr)
 ```
 ```{r}
-modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelUnder <- glm(BABYLT5LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelUnder), confint(modelUnder)))
 modelUnder %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelUnder)
 ```
 ```{r}
-modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelOver <- glm(BABYGT9LBS ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelOver), confint(modelOver)))
 modelOver %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelOver)
 ```
 ```{r}
-modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelDiab <- glm(DIABPREG ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR = coef(modelDiab), confint(modelDiab)))
 modelDiab%>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelDiab)
 ```
 ```{r}
-modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
+modelPret <- glm(PRETERM ~ MENARCHE + AGE + RACE + ETHNICITY + t0.normindx + EDUC + MWEIGHT + FULLTERM + BMI + SMOKING + ALCOHOL, family = 'binomial', data = merged)
 exp(cbind(OR= coef(modelPret), confint(modelPret)))
 modelPret %>% tbl_regression(pvalue_fun = ~style_pvalue(.x, digits = 3), exponentiate = TRUE) %>% add_global_p() 
 summary(modelPret)
